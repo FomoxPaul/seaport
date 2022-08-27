@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.7;
+pragma solidity ^0.8.7;
 
 interface ERC20ApprovalInterface {
     function approve(address, uint256) external returns (bool);
@@ -65,6 +65,12 @@ contract EIP1271Wallet {
     {
         if (digestApproved[digest]) {
             return _EIP_1271_MAGIC_VALUE;
+        }
+
+        // NOTE: this is obviously not secure, do not use outside of testing.
+        if (signature.length == 64) {
+            // All signatures of length 64 are OK as long as valid is true
+            return isValid ? _EIP_1271_MAGIC_VALUE : bytes4(0xffffffff);
         }
 
         if (signature.length != 65) {

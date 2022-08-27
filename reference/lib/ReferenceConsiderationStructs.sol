@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-// prettier-ignore
-import {
-    OrderType,
-    ItemType
-} from "contracts/lib/ConsiderationEnums.sol";
+import { OrderType, ItemType } from "contracts/lib/ConsiderationEnums.sol";
 
-import { SpentItem, ReceivedItem } from "contracts/lib/ConsiderationStructs.sol";
+import {
+    SpentItem,
+    ReceivedItem
+} from "contracts/lib/ConsiderationStructs.sol";
 
 import { ConduitTransfer } from "contracts/conduit/lib/ConduitStructs.sol";
 
@@ -68,11 +67,9 @@ struct OrderToExecute {
 struct FractionData {
     uint256 numerator; // The portion of the order that should be filled.
     uint256 denominator; // The total size of the order
-    bytes32 offererConduitKey; // The offerer's conduit key.
     bytes32 fulfillerConduitKey; // The fulfiller's conduit key.
-    uint256 duration; // The total duration of the order.
-    uint256 elapsed; // The time elapsed since the order's start time.
-    uint256 remaining; // The time left until the order's end time.
+    uint256 startTime; // The start time of the order.
+    uint256 endTime; // The end time of the order.
 }
 
 /**

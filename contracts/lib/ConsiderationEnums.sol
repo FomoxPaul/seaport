@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.8.7;
+pragma solidity ^0.8.7;
 
 // prettier-ignore
 enum OrderType {
@@ -137,7 +137,7 @@ enum ItemType {
 enum Side {
     // 0: Items that can be spent
     OFFER,
-    
+
     // 1: Items that must be received
     CONSIDERATION
 }

@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-import { ConsiderationItem, OfferItem, OrderParameters } from "contracts/lib/ConsiderationStructs.sol";
+import {
+    ConsiderationItem,
+    OfferItem,
+    OrderParameters
+} from "../../contracts/lib/ConsiderationStructs.sol";
 
 import { ReferenceConsiderationBase } from "./ReferenceConsiderationBase.sol";
 
@@ -52,7 +56,8 @@ contract ReferenceGettersAndDerivers is ReferenceConsiderationBase {
     }
 
     /**
-     * @dev Internal view function to derive the EIP-712 hash for a consideration item.
+     * @dev Internal view function to derive the EIP-712 hash for a
+     *      consideration item.
      *
      * @param considerationItem The consideration item to hash.
      *
@@ -84,13 +89,13 @@ contract ReferenceGettersAndDerivers is ReferenceConsiderationBase {
      *      caller.
      *
      * @param orderParameters The parameters of the order to hash.
-     * @param nonce           The nonce of the order to hash.
+     * @param counter           The counter of the order to hash.
      *
      * @return orderHash The hash.
      */
     function _deriveOrderHash(
         OrderParameters memory orderParameters,
-        uint256 nonce
+        uint256 counter
     ) internal view returns (bytes32 orderHash) {
         // Designate new memory regions for offer and consideration item hashes.
         bytes32[] memory offerHashes = new bytes32[](
@@ -134,7 +139,7 @@ contract ReferenceGettersAndDerivers is ReferenceConsiderationBase {
                     orderParameters.zoneHash,
                     orderParameters.salt,
                     orderParameters.conduitKey,
-                    nonce
+                    counter
                 )
             );
     }

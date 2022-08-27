@@ -1,4 +1,4 @@
-name: Consideration Test CI
+name: Seaport Test CI
 
 on: [push, pull_request]
 
@@ -21,6 +21,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
       - run: yarn install
       - run: yarn build
 
@@ -38,6 +39,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
       - run: yarn install
       - run: yarn lint:check
 
@@ -55,7 +57,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
       - run: yarn install
+      - run: yarn build
       - run: yarn test
 
   reference-test:
@@ -75,7 +79,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
       - run: yarn install
+      - run: yarn build
+      - run: yarn build:ref
       - run: yarn test:ref
 
   forge-lite:
@@ -119,7 +126,7 @@ jobs:
       - name: Precompile reference using 0.8.7 and via-ir=false
         run: FOUNDRY_PROFILE=reference forge build
 
-      - name: Precompile optimized using 0.8.13 and via-ir=true
+      - name: Precompile optimized using 0.8.14 and via-ir=true
         run: FOUNDRY_PROFILE=optimized forge build
 
       - name: Run tests
@@ -139,12 +146,14 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
       - run: yarn install
+      - run: yarn build
       - run: yarn coverage
-      - uses: VeryGoodOpenSource/very_good_coverage@v1
+      - uses: codecov/codecov-action@v3
         with:
-          path: "./coverage/lcov.info"
-          min_coverage: 100
+          files: ./coverage/lcov.info
+          flags: production
 
   reference-coverage:
     name: Run Reference Coverage Tests
@@ -163,9 +172,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: 'yarn'
       - run: yarn install
+      - run: yarn build
+      - run: yarn build:ref
       - run: yarn coverage:ref
-      - uses: VeryGoodOpenSource/very_good_coverage@v1
+      - uses: codecov/codecov-action@v3
         with:
-          path: "./coverage/lcov.info"
-          min_coverage: 100
+          files: ./coverage/lcov.info
+          flags: reference

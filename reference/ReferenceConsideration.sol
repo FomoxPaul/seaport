@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.7;
 
-// prettier-ignore
 import {
     ConsiderationInterface
 } from "contracts/interfaces/ConsiderationInterface.sol";
 
-// prettier-ignore
 import {
     OrderComponents,
     BasicOrderParameters,
@@ -22,14 +20,17 @@ import {
 
 import { ReferenceOrderCombiner } from "./lib/ReferenceOrderCombiner.sol";
 
-import { OrderToExecute, AccumulatorStruct } from "./lib/ReferenceConsiderationStructs.sol";
+import {
+    OrderToExecute,
+    AccumulatorStruct
+} from "./lib/ReferenceConsiderationStructs.sol";
 
 /**
  * @title ReferenceConsideration
  * @author 0age
  * @custom:coauthor d1ll0n
  * @custom:coauthor transmissions11
- * @custom:version rc-1
+ * @custom:version 1.1-reference
  * @notice Consideration is a generalized ETH/ERC20/ERC721/ERC1155 marketplace.
  *         It minimizes external calls to the greatest extent possible and
  *         provides lightweight methods for common routes as well as more
@@ -127,7 +128,8 @@ contract ReferenceConsideration is
         fulfilled = _validateAndFulfillAdvancedOrder(
             _convertOrderToAdvanced(order),
             new CriteriaResolver[](0), // No criteria resolvers supplied.
-            fulfillerConduitKey
+            fulfillerConduitKey,
+            msg.sender
         );
     }
 
@@ -156,7 +158,7 @@ contract ReferenceConsideration is
      *                            contained in the merkle root held by the item
      *                            in question's criteria element. Note that an
      *                            empty criteria indicates that any
-     *                            (transferrable) token identifier on the token
+     *                            (transferable) token identifier on the token
      *                            in question is valid and that no associated
      *                            proof needs to be supplied.
      * @param fulfillerConduitKey A bytes32 value indicating what conduit, if
@@ -164,6 +166,9 @@ contract ReferenceConsideration is
      *                            from. The zero hash signifies that no conduit
      *                            should be used (and direct approvals set on
      *                            Consideration).
+     * @param recipient           The intended recipient for all received items,
+     *                            with `address(0)` indicating that the caller
+     *                            should receive the items.
      *
      * @return fulfilled A boolean indicating whether the order has been
      *                   fulfilled.
@@ -171,7 +176,8 @@ contract ReferenceConsideration is
     function fulfillAdvancedOrder(
         AdvancedOrder calldata advancedOrder,
         CriteriaResolver[] calldata criteriaResolvers,
-        bytes32 fulfillerConduitKey
+        bytes32 fulfillerConduitKey,
+        address recipient
     )
         external
         payable
@@ -184,7 +190,8 @@ contract ReferenceConsideration is
         fulfilled = _validateAndFulfillAdvancedOrder(
             advancedOrder,
             criteriaResolvers,
-            fulfillerConduitKey
+            fulfillerConduitKey,
+            recipient == address(0) ? msg.sender : recipient
         );
     }
 
@@ -264,6 +271,7 @@ contract ReferenceConsideration is
                 offerFulfillments,
                 considerationFulfillments,
                 fulfillerConduitKey,
+                msg.sender,
                 maximumFulfilled
             );
     }
@@ -304,7 +312,7 @@ contract ReferenceConsideration is
      *                                  is contained in the merkle root held by
      *                                  the item in question's criteria element.
      *                                  Note that an empty criteria indicates
-     *                                  that any (transferrable) token
+     *                                  that any (transferable) token
      *                                  identifier on the token in question is
      *                                  valid and that no associated proof needs
      *                                  to be supplied.
@@ -335,6 +343,7 @@ contract ReferenceConsideration is
         FulfillmentComponent[][] calldata offerFulfillments,
         FulfillmentComponent[][] calldata considerationFulfillments,
         bytes32 fulfillerConduitKey,
+        address recipient,
         uint256 maximumFulfilled
     )
         external
@@ -359,6 +368,7 @@ contract ReferenceConsideration is
                 offerFulfillments,
                 considerationFulfillments,
                 fulfillerConduitKey,
+                recipient == address(0) ? msg.sender : recipient,
                 maximumFulfilled
             );
     }
@@ -431,7 +441,7 @@ contract ReferenceConsideration is
      *                          offer or consideration, a token identifier, and
      *                          a proof that the supplied token identifier is
      *                          contained in the order's merkle root. Note that
-     *                          an empty root indicates that any (transferrable)
+     *                          an empty root indicates that any (transferable)
      *                          token identifier is valid and that no associated
      *                          proof needs to be supplied.
      * @param fulfillments      An array of elements allocating offer components
@@ -506,19 +516,19 @@ contract ReferenceConsideration is
 
     /**
      * @notice Cancel all orders from a given offerer with a given zone in bulk
-     *         by incrementing a nonce. Note that only the offerer may increment
-     *         the nonce.
+     *         by incrementing a counter. Note that only the offerer may
+     *         increment the counter.
      *
-     * @return newNonce The new nonce.
+     * @return newCounter The new counter.
      */
-    function incrementNonce()
+    function incrementCounter()
         external
         override
         notEntered
-        returns (uint256 newNonce)
+        returns (uint256 newCounter)
     {
-        // Increment current nonce for the supplied offerer.
-        newNonce = _incrementNonce();
+        // Increment current counter for the supplied offerer.
+        newCounter = _incrementCounter();
     }
 
     /**
@@ -534,7 +544,8 @@ contract ReferenceConsideration is
         override
         returns (bytes32 orderHash)
     {
-        // Derive order hash by supplying order parameters along with the nonce.
+        // Derive order hash by supplying order parameters along with the
+        // counter.
         // prettier-ignore
         orderHash = _deriveOrderHash(
             OrderParameters(
@@ -550,7 +561,7 @@ contract ReferenceConsideration is
                 order.conduitKey,
                 order.consideration.length
             ),
-            order.nonce
+            order.counter
         );
     }
 
@@ -587,20 +598,20 @@ contract ReferenceConsideration is
     }
 
     /**
-     * @notice Retrieve the current nonce for a given offerer.
+     * @notice Retrieve the current counter for a given offerer.
      *
      * @param offerer The offerer in question.
      *
-     * @return nonce The current nonce.
+     * @return counter The current counter.
      */
-    function getNonce(address offerer)
+    function getCounter(address offerer)
         external
         view
         override
-        returns (uint256 nonce)
+        returns (uint256 counter)
     {
-        // Return the nonce for the supplied offerer.
-        nonce = _getNonce(offerer);
+        // Return the counter for the supplied offerer.
+        counter = _getCounter(offerer);
     }
 
     /**

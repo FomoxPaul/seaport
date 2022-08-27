@@ -1,18 +1,30 @@
 ![Seaport](img/Seaport-banner.png)
 
+[![Version][version-badge]][version-link]
+[![Test CI][ci-badge]][ci-link]
+[![Code Coverage][coverage-badge]][coverage-link]
+[![License][license-badge]][license-link]
+[![Docs][docs-badge]][docs-link]
+[![Discussions][discussions-badge]][discussions-link]
+[![JS Library][js-library-badge]][js-library-link]
+
 # Seaport
 
 Seaport is a new marketplace protocol for safely and efficiently buying and selling NFTs.
 
 ## Table of Contents
 
-- [Background](#background)
-- [Deployments](#deployments)
-- [Install](#install)
-- [Usage](#usage)
-- [Audits](#audits)
-- [Contributing](#contributing)
-- [License](#license)
+- [Seaport](#seaport)
+  - [Table of Contents](#table-of-contents)
+  - [Background](#background)
+  - [Deployments](#deployments)
+  - [Diagram](#diagram)
+  - [Install](#install)
+  - [Usage](#usage)
+    - [Foundry Tests](#foundry-tests)
+  - [Audits](#audits)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Background
 
@@ -22,23 +34,84 @@ See the [documentation](docs/SeaportDocumentation.md), the [interface](contracts
 
 ## Deployments
 
-Seaport deployment addresses:
+<table>
+<tr>
+<th>Network</th>
+<th>Seaport 1.1</th>
+<th>ConduitController</th>
+</tr>
 
-| Network          | Address                                    |
-| ---------------- | ------------------------------------------ |
-| Ethereum Mainnet | [0x00000000006CEE72100D161c57ADA5Bb2be1CA79](https://etherscan.io/address/0x00000000006cee72100d161c57ada5bb2be1ca79#code) |
-| Polygon Mainnet  | [0x00000000006CEE72100D161c57ADA5Bb2be1CA79](https://polygonscan.com/address/0x00000000006CEE72100D161c57ADA5Bb2be1CA79) |
-| Goerli           | [0x00000000006CEE72100D161c57ADA5Bb2be1CA79](https://goerli.etherscan.io/address/0x00000000006cee72100d161c57ada5bb2be1ca79#code) |
-| Rinkeby          | [0x00000000006CEE72100D161c57ADA5Bb2be1CA79](https://rinkeby.etherscan.io/address/0x00000000006cee72100d161c57ada5bb2be1ca79#code) |
+<tr><td>Ethereum</td><td rowspan="14">
 
-Conduit Controller deployment addresses:
+[0x00000000006c3852cbEf3e08E8dF289169EdE581](https://etherscan.io/address/0x00000000006c3852cbEf3e08E8dF289169EdE581#code)
 
-| Network          | Address                                    |
-| ---------------- | ------------------------------------------ |
-| Ethereum Mainnet | [0x00000000006cE100a8b5eD8eDf18ceeF9e500697](https://etherscan.io/address/0x00000000006ce100a8b5ed8edf18ceef9e500697#code) |
-| Polygon Mainnet  | [0x00000000006cE100a8b5eD8eDf18ceeF9e500697](https://polygonscan.com/address/0x00000000006ce100a8b5ed8edf18ceef9e500697) |
-| Goerli           | [0x00000000006cE100a8b5eD8eDf18ceeF9e500697](https://goerli.etherscan.io/address/0x00000000006ce100a8b5ed8edf18ceef9e500697) |
-| Rinkeby          | [0x00000000006cE100a8b5eD8eDf18ceeF9e500697](https://rinkeby.etherscan.io/address/0x00000000006ce100a8b5ed8edf18ceef9e500697) |
+</td><td rowspan="14">
+
+[0x00000000F9490004C11Cef243f5400493c00Ad63](https://etherscan.io/address/0x00000000F9490004C11Cef243f5400493c00Ad63#code)
+
+</td></tr>
+
+<tr><td>Rinkeby</td></tr>
+<tr><td>Goerli</td></tr>
+<tr><td>Kovan</td></tr>
+<tr><td>Polygon</td></tr>
+<tr><td>Mumbai</td></tr>
+<tr><td>Optimism</td></tr>
+<tr><td>Optimistic Kovan</td></tr>
+<tr><td>Arbitrum</td></tr>
+<tr><td>Arbitrum Rinkeby</td></tr>
+<tr><td>Avalanche Fuji</td></tr>
+<tr><td>Avalanche C-Chain</td></tr>
+<tr><td>Gnosis Chain</td></tr>
+<tr><td>BSC</td></tr>
+</table>
+
+To be deployed on other EVM chains, such as:
+
+- Klaytn
+- Baobab
+- Skale
+- Celo
+- Fantom
+- RSK
+
+To deploy to a new EVM chain, follow the [steps outlined here](docs/Deployment.md).
+
+## Diagram
+
+```mermaid
+graph TD
+    Offer & Consideration --> Order
+    zone & conduitKey --> Order
+
+    subgraph Seaport[ ]
+    Order --> Fulfill & Match
+    Order --> Validate & Cancel
+    end
+
+    Validate --> Verify
+    Cancel --> OrderStatus
+
+    Fulfill & Match --> OrderCombiner --> OrderFulfiller
+
+    OrderCombiner --> BasicOrderFulfiller --> OrderValidator
+    OrderCombiner --> FulfillmentApplier
+
+    OrderFulfiller --> CriteriaResolution
+    OrderFulfiller --> AmountDeriver
+    OrderFulfiller --> OrderValidator
+
+    OrderValidator --> ZoneInteraction
+    OrderValidator --> Executor --> TokenTransferrer
+    Executor --> Conduit --> TokenTransferrer
+    Executor --> Verify
+
+    subgraph Verifiers[ ]
+    Verify --> Time & Signature & OrderStatus
+    end
+```
+
+For a more thorough flowchart see [Seaport diagram](./diagrams/Seaport.drawio.svg).
 
 ## Install
 
@@ -98,7 +171,7 @@ forge install
 
 To precompile contracts:
 
-The optimized contracts are compiled using the IR pipeline, which can take a long time to compile. By default, the differential test suite depends deploys precompiled versions of both the optimized and reference contracts. Precompilation can be done by specifying specific Foundry profiles.
+The optimized contracts are compiled using the IR pipeline, which can take a long time to compile. By default, the differential test suite deploys precompiled versions of both the optimized and reference contracts. Precompilation can be done by specifying specific Foundry profiles.
 
 ```bash
 FOUNDRY_PROFILE=optimized forge build
@@ -118,7 +191,6 @@ You may wish to include a `.env` file that `export`s a specific profile when dev
 **Note** that stack+debug traces will not be available for precompiled contracts. To facilitate local development, specifying `FOUNDRY_PROFILE=local-ffi` will compile and deploy the reference implementation normally, allowing for stack+debug traces.
 
 **Note** the `local-ffi` profile uses Forge's `ffi` flag. `ffi` can potentially be unsafe, as it allows Forge to execute arbitrary code. Use with caution, and always ensure you trust the code in this repository, especially when working on third-party forks.
-
 
 The following modifiers are also available:
 
@@ -159,15 +231,30 @@ When making a pull request, ensure that:
 - All tests pass.
 - Code coverage remains at 100% (coverage tests must currently be written in hardhat).
 - All new code adheres to the style guide:
-	- All lint checks pass.
-	- Code is thoroughly commented with natspec where relevant.
+  - All lint checks pass.
+  - Code is thoroughly commented with natspec where relevant.
 - If making a change to the contracts:
-	- Gas snapshots are provided and demonstrate an improvement (or an acceptable deficit given other improvements).
-	- Reference contracts are modified correspondingly if relevant.
-	- New tests (ideally via foundry) are included for all new features or code paths.
+  - Gas snapshots are provided and demonstrate an improvement (or an acceptable deficit given other improvements).
+  - Reference contracts are modified correspondingly if relevant.
+  - New tests (ideally via foundry) are included for all new features or code paths.
 - If making a modification to third-party dependencies, `yarn audit` passes.
 - A descriptive summary of the PR has been provided.
 
 ## License
 
 [MIT](LICENSE) Copyright 2022 Ozone Networks, Inc.
+
+[version-badge]: https://img.shields.io/github/package-json/v/ProjectOpenSea/seaport
+[version-link]: https://github.com/ProjectOpenSea/seaport/releases
+[ci-badge]: https://github.com/ProjectOpenSea/seaport/actions/workflows/test.yml/badge.svg
+[ci-link]: https://github.com/ProjectOpenSea/seaport/actions/workflows/test.yml
+[coverage-badge]: https://codecov.io/gh/ProjectOpenSea/seaport/branch/main/graph/badge.svg
+[coverage-link]: https://codecov.io/gh/ProjectOpenSea/seaport
+[license-badge]: https://img.shields.io/github/license/ProjectOpenSea/seaport
+[license-link]: https://github.com/ProjectOpenSea/seaport/blob/main/LICENSE
+[docs-badge]: https://img.shields.io/badge/Seaport-documentation-informational
+[docs-link]: https://github.com/ProjectOpenSea/seaport/tree/main/docs
+[discussions-badge]: https://img.shields.io/badge/Seaport-discussions-blueviolet
+[discussions-link]: https://github.com/ProjectOpenSea/seaport/discussions
+[js-library-badge]: https://img.shields.io/badge/Seaport.js-library-red
+[js-library-link]: https://github.com/ProjectOpenSea/seaport-js

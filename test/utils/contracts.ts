@@ -1,15 +1,15 @@
 import { ethers } from "hardhat";
-import { Contract } from "ethers";
-import { JsonRpcSigner } from "@ethersproject/providers";
-import * as dotenv from "dotenv";
 
-dotenv.config();
+import type { JsonRpcSigner } from "@ethersproject/providers";
+import type { Contract, Wallet } from "ethers";
 
-export async function deployContract<C extends Contract>(
+import "dotenv/config";
+
+export const deployContract = async <C extends Contract>(
   name: string,
-  signer: JsonRpcSigner,
+  signer: JsonRpcSigner | Wallet,
   ...args: any[]
-): Promise<C> {
+): Promise<C> => {
   const references = new Map<string, string>([
     ["Consideration", "ReferenceConsideration"],
     ["Conduit", "ReferenceConduit"],
@@ -18,10 +18,10 @@ export async function deployContract<C extends Contract>(
 
   const nameWithReference =
     process.env.REFERENCE && references.has(name)
-      ? references.get(name) || name
+      ? references.get(name) ?? name
       : name;
 
   const f = await ethers.getContractFactory(nameWithReference, signer);
   const c = await f.deploy(...args);
   return c as C;
-}
+};
